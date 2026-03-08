@@ -1,0 +1,2 @@
+
+**PID Inverted Pendulum Simulation** (`pid-pendulum-sim`) is a complete, practical demonstration of applied feedback control - spanning nonlinear physics modeling, RK4 numerical integration, a production-quality PID implementation with full safeguard coverage, real-time visualization, quantitative disturbance robustness analysis, and structured data logging. The system is designed to be readable, modular, and extensible for future control experimentation.
