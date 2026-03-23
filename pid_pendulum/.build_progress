@@ -188,3 +188,4 @@
 - Increase plot history window for clearer signal inspection (iteration 187)
 - Adjust simulation timestep for numerical stability checks (iteration 188)
 - Refine cart friction parameter in physics settings (iteration 189)
+- Update random seed default for reproducible startup angles (iteration 190)
