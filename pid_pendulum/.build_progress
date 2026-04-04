@@ -214,3 +214,4 @@
 - Refine derivative gain for improved damping (iteration 213)
 - Update disturbance impulse timing in configuration (iteration 214)
 - Increase plot history window for clearer signal inspection (iteration 215)
+- Adjust simulation timestep for numerical stability checks (iteration 216)
