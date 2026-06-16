@@ -1,117 +1,112 @@
-# PID Controller Simulation — Self-Balancing Inverted Pendulum
+# PID Controller Simulation - Self-Balancing Inverted Pendulum
 
-This project simulates a classic robotics control problem: balancing an inverted pendulum on a moving cart with a **manual PID controller** (no control-toolbox shortcuts).
+I built this project to show how I implement closed-loop control from scratch on a classic robotics problem: balancing an inverted pendulum on a cart in real time.
 
-It demonstrates how feedback control stabilizes an unstable nonlinear system in real time, including:
+The goal was to avoid control-framework shortcuts and directly build the full loop myself:
 
-- physics from first principles,
-- PID with anti-windup and derivative filtering,
-- live rendering + live state plots,
-- online gain tuning with sliders,
-- disturbance rejection metrics and run logging.
+- nonlinear physics simulation,
+- manual PID controller implementation,
+- live rendering and live state plotting,
+- runtime gain tuning,
+- disturbance testing and logged recovery metrics.
 
-## Why this matters
+## What I built
 
-The inverted pendulum is a standard benchmark for robotic balancing systems (e.g., mobile robots, reaction-wheel systems, biped posture control). This project shows the full loop from dynamics to controller behavior and measurable recovery performance.
-
-## Project layout
+Inside `pid_pendulum/`:
 
 ```text
-pid_pendulum/
-  main.py
-  physics.py
-  pid.py
-  visualizer.py
-  plotter.py
-  logger.py
-  config.json
-  requirements.txt
-  README.md
-  examples/
-  logs/
+main.py         # simulation loop / orchestration
+physics.py      # nonlinear cart-pole dynamics + RK4/Euler integration
+pid.py          # hand-built PID with anti-windup + derivative filtering
+visualizer.py   # pygame cart + pendulum animation
+plotter.py      # matplotlib real-time plots + gain sliders
+logger.py       # CSV logging + step-response metrics
+config.json     # default stable config
+config_unstable.json
+requirements.txt
 ```
 
-## Install + run
+## Why this project matters
 
-From this folder:
+The inverted pendulum is a standard benchmark in robotics and controls because it is unstable by default. If the controller design is weak, it fails quickly. I used it here to demonstrate practical controller behavior under disturbance, not just ideal textbook math.
+
+## How to run
+
+From repo root:
 
 ```bash
-python -m venv .venv
+cd pid_pendulum
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python main.py --config config.json
+python3 main.py --config config.json
 ```
 
-Headless run (useful on servers):
+Headless run:
 
 ```bash
-python main.py --config config.json --headless --no-realtime
+cd pid_pendulum
+python3 main.py --config config.json --headless --no-realtime
 ```
 
-## Tuning PID gains during runtime
+## Runtime tuning (Kp, Ki, Kd)
 
-When GUI mode is enabled:
+When I run in GUI mode:
 
-- a `pygame` window shows cart + pole motion;
-- a `matplotlib` window shows live state traces;
-- sliders at the bottom let you tune `Kp`, `Ki`, `Kd` in real time.
+- `pygame` shows the cart and pendulum motion in real time,
+- `matplotlib` shows angle, angular velocity, control output, and error,
+- sliders let me tune `Kp`, `Ki`, and `Kd` while the simulation is running.
 
-### Physical meaning of each term
+### How I think about each PID term physically
 
-- **Kp (proportional):** reacts to current angle error.  
-  Too low = sluggish correction, too high = aggressive oscillation.
-- **Ki (integral):** removes residual bias (e.g., slight constant disturbances).  
-  Too high = windup and slow oscillatory recovery.
-- **Kd (derivative):** damps motion by reacting to angular rate trend.  
-  Too low = overshoot, too high = noisy/jerky control.
+- **Kp**: reacts to current angle error.
+  - too low: slow correction
+  - too high: aggressive oscillation
+- **Ki**: removes residual offset over time.
+  - too high: windup and sluggish oscillation
+- **Kd**: adds damping from motion trend.
+  - too low: overshoot
+  - too high: noisy or twitchy control
 
-The controller in `pid.py` includes:
+The PID implementation includes:
 
-- output limits,
-- integral clamping + back-calculation anti-windup,
+- explicit output limiting,
+- integral clamping,
+- back-calculation anti-windup,
 - first-order derivative filtering.
 
-## Disturbance + step response metrics
+## Disturbance testing and metrics
 
-A force impulse is injected mid-run (`disturbance` section in `config.json`).
+I inject a force impulse mid-run and then compute:
 
-Each run logs:
+- recovery time,
+- overshoot percentage,
+- steady-state error.
 
-- full state (`x`, `x_dot`, `theta`, `theta_dot`),
-- PID internals (`error`, `P`, `I`, `D`, `output`),
-- disturbance force,
-- computed response metrics:
-  - recovery time,
-  - overshoot percentage,
-  - steady-state error.
-
-Outputs are written to:
+Each run exports:
 
 - `logs/run_<timestamp>.csv`
 - `logs/run_<timestamp>_metrics.json`
 
-Example metrics from a stable logged run (`run_20260616_082721_metrics.json`):
+Example stable-run metrics from this repo:
 
 - recovery time: `0.14 s`
-- overshoot: `16.64 %`
+- overshoot: `16.64%`
 - steady-state error: `0.0028 deg`
 
-## Sample behavior snapshots
+## Stable vs unstable examples
 
-Stable tuning example:
-
-![stable run](examples/stable_run.png)
-
-Unstable tuning example:
-
-![unstable run](examples/unstable_run.png)
-
-You can regenerate figures with:
+Generate comparison plots:
 
 ```bash
-# Stable-ish gains (from config defaults)
-python main.py --headless --no-realtime --duration 10 --save-plot examples/stable_run.png
+cd pid_pendulum
 
-# Deliberately bad tuning
-python main.py --config config_unstable.json --headless --no-realtime --duration 10 --save-plot examples/unstable_run.png
+# Stable behavior (default config)
+python3 main.py --config config.json --headless --no-realtime --duration 10 --save-plot examples/stable_run.png
+
+# Deliberately poor tuning
+python3 main.py --config config_unstable.json --headless --no-realtime --duration 10 --save-plot examples/unstable_run.png
 ```
+
+This project is meant to be practical and transparent: every control and simulation piece is implemented directly so the behavior is easy to inspect, tune, and extend.
+
